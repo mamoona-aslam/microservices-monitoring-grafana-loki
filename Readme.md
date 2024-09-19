@@ -128,6 +128,8 @@ This project uses Vagrant to spin up a Virtual Machine (VM), which is automatica
 - **Loki**: Collects and indexes the logs from microservices.
 - **Promtail**: Collects logs from Docker containers and forwards them to Loki.
 
+![Architecture](microservices.png)
+
 The microservices are simple Python Flask applications, each running in its own Docker container. Logs are collected by Promtail and sent to Loki for aggregation. These logs can then be visualized in Grafana.
 
 # Services Overview:
