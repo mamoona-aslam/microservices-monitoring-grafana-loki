@@ -1,0 +1,36 @@
+version: '3.3'
+
+services:
+  product-service:
+    container_name: product-service
+    build:
+      context: .
+      dockerfile: Dockerfile.product
+    ports:
+      - "5001:5001"
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+
+  order-service:
+    container_name: order-service
+    build:
+      context: .
+      dockerfile: Dockerfile.order
+    ports:
+      - "5002:5002"
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+
+  user-service:
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: Dockerfile.user
+    ports:
+      - "5003:5003"
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+
