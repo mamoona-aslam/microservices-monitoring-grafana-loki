@@ -1,0 +1,32 @@
+---
+- name: Download and install Promtail
+  get_url:
+    url: https://github.com/grafana/loki/releases/download/v2.8.0/promtail-linux-amd64.zip
+    dest: /tmp/promtail.zip
+- unarchive:
+    src: /tmp/promtail.zip
+    dest: /usr/local/bin
+    remote_src: yes
+- file:
+    path: /usr/local/bin/promtail-linux-amd64
+    state: file
+    mode: '0755'
+    owner: root
+    group: root
+- command: mv /usr/local/bin/promtail-linux-amd64 /usr/local/bin/promtail
+
+- name: Ensure Promtail directory exists
+  file:
+    path: /etc/promtail
+    state: directory
+    mode: '0755'
+
+- name: Create Promtail configuration
+  template:
+    src: promtail-config.yaml.j2
+    dest: /etc/promtail/promtail-local-config.yaml
+
+- name: Create Promtail systemd service
+  template:
+    src: promtail.service.j2
+    dest: /etc/systemd/system/promtail.service

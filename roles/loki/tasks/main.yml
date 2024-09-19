@@ -1,0 +1,41 @@
+- name: Download and install Loki
+  get_url:
+    url: https://github.com/grafana/loki/releases/download/v2.8.0/loki-linux-amd64.zip
+    dest: /tmp/loki.zip
+
+- name: Install unzip utility
+  apt:
+    name: unzip
+    state: present
+
+- name: Unzip Loki binary
+  unarchive:
+    src: /tmp/loki.zip
+    dest: /usr/local/bin
+    remote_src: yes
+    extra_opts: [ "-j" ]
+
+- file:
+    path: /usr/local/bin/loki-linux-amd64
+    state: file
+    mode: '0755'
+    owner: root
+    group: root
+
+- command: mv /usr/local/bin/loki-linux-amd64 /usr/local/bin/loki
+
+- name: Ensure Loki directory exists
+  file:
+    path: /etc/loki
+    state: directory
+    mode: '0755'
+
+- name: Create Loki configuration
+  template:
+    src: loki-config.yaml.j2
+    dest: /etc/loki/loki-local-config.yaml
+
+- name: Create Loki systemd service
+  template:
+    src: loki.service.j2
+    dest: /etc/systemd/system/loki.service

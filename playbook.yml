@@ -1,0 +1,72 @@
+---
+- hosts: local
+  become: yes
+
+  roles:
+    - common
+    - loki
+    - promtail
+    - grafana
+
+  tasks:
+    - name: Reload systemd and start services
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and enable Loki and Promtail services
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - loki
+        - promtail
+
+    - name: Wait for Grafana to be ready
+      wait_for:
+        port: 3000
+        delay: 10
+        timeout: 300
+
+    - name: Configure Grafana datasource
+      uri:
+        url: http://localhost:3000/api/datasources
+        method: POST
+        body_format: json
+        body:
+          name: Loki
+          type: loki
+          url: http://localhost:3100
+          access: proxy
+        user: admin
+        password: admin
+        force_basic_auth: yes
+        status_code: 200
+      ignore_errors: yes
+
+    - name: Get Loki data source UUID
+      uri:
+        url: "http://localhost:3000/api/datasources"
+        user: admin
+        password: admin
+        force_basic_auth: yes
+      register: datasources
+
+    - name: Set Loki UUID fact
+      set_fact:
+        loki_uid: "{{ datasources.json | json_query('[?type==`loki`].uid') | first }}"
+    
+    - name: Create Grafana dashboard JSON with Loki UID
+      template:
+        src: dashboard.json.j2
+        dest: microservice.json  
+
+    - name: Import Grafana dashboard Microservices
+      community.grafana.grafana_dashboard:
+        grafana_url: http://localhost:3000
+        grafana_user: "admin"
+        grafana_password: "admin"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: true
+        path: microservice.json
